@@ -12,7 +12,7 @@ class LandingPage extends StatelessWidget {
           children: [
             // Veliki žuti oval
             Positioned(
-              top: 20,
+              top: 30,
               left: 15,
               child: Container(
                 width: 400,
