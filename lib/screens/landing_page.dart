@@ -10,7 +10,7 @@ class LandingPage extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            // Veliki žuti oval
+            // Veliki žuti krug
             Positioned(
               top: 30,
               left: 15,
@@ -26,7 +26,7 @@ class LandingPage extends StatelessWidget {
             // Sadržaj
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 44.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -39,7 +39,7 @@ class LandingPage extends StatelessWidget {
                         color: Color(0xFF1A434E),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     const Text(
                       'rješenje za sve vaše dogovore',
                       style: TextStyle(

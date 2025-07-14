@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/login_screen(TEST).dart';
 import 'screens/landing_page.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -40,8 +39,8 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LandingPage(),
-        //'/login': (context) => const LoginScreen(),
-        //'/register': (context) => const RegisterScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
         //'/admin-login': (context) => const LoginScreen(isAdmin: true),
         //'/providers': (context) => const ServiceProvidersList(),
         //'/select_date': (context) => const ReservationDateScreen(),
