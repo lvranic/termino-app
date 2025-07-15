@@ -62,7 +62,7 @@ class LandingPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildButton(
                       text: 'Pružatelji usluge',
-                      onPressed: () => Navigator.pushNamed(context, '/admin-login'),
+                      onPressed: () => Navigator.pushNamed(context, '/admin-register'),
                     ),
                   ],
                 ),

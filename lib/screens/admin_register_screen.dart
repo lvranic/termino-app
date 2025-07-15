@@ -1,40 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:termino/services/auth_service.dart'; // prilagodi prema tvojoj putanji
+import 'package:termino/services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class AdminRegisterScreen extends StatefulWidget {
+  final bool isAdmin;
+
+  const AdminRegisterScreen({super.key, required this.isAdmin});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<AdminRegisterScreen> createState() => _AdminRegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _authService = AuthService();
+class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
 
-  void _login() async {
+  final _authService = AuthService();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  void _registerAdmin() async {
+    final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unesite e-mail i lozinku')),
+        const SnackBar(content: Text('Molimo popunite sva polja')),
       );
       return;
     }
 
-    await _authService.loginUser(
-      email: email,
-      password: password,
-      context: context,
-    );
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lozinke se ne podudaraju')),
+      );
+      return;
+    }
+
+    try {
+      final user = await _authService.signUpWithEmail(email, password, name, 'admin');
+
+      if (user != null) {
+        Navigator.pushReplacementNamed(context, '/admin-setup');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Greška: $e')),
+      );
+    }
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -45,12 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A434E),
         elevation: 0,
-        leading: Navigator.canPop(context)
-            ? IconButton(
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFFC3F44D)),
           onPressed: () => Navigator.pop(context),
-        )
-            : null,
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -70,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'rješenje za sve vaše dogovore',
+                'registracija pružatelja usluge',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
@@ -79,6 +98,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 64),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Ime i prezime',
+                  labelStyle: TextStyle(color: Colors.white),
+                  fillColor: Colors.white24,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -108,9 +141,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 style: const TextStyle(color: Colors.white),
               ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Potvrdi lozinku',
+                  labelStyle: TextStyle(color: Colors.white),
+                  fillColor: Colors.white24,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+              ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: _login,
+                onPressed: _registerAdmin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFC3F44D),
                   foregroundColor: const Color(0xFF1A434E),
@@ -120,26 +168,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 child: const Text(
-                  'Prijavi se',
+                  'Registriraj se kao pružatelj usluge',
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Sofadi One',
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  // možeš ovdje dodati navigaciju na zaboravljenu lozinku
-                },
-                child: const Text(
-                  'Zaboravio/la si lozinku?',
-                  style: TextStyle(
-                    color: Color(0xFFC3F44D),
-                    fontFamily: 'Sofadi One',
-                  ),
-                ),
-              ),
+              )
             ],
           ),
         ),

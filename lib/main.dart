@@ -4,6 +4,8 @@ import 'firebase_options.dart';
 import 'screens/landing_page.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/admin_register_screen.dart';
+import 'screens/admin_setup_screen.dart';
 import 'screens/service_providers_list.dart';
 import 'screens/reservation_date_screen.dart';
 import 'screens/reservation_time_screen.dart';
@@ -41,7 +43,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LandingPage(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        //'/admin-login': (context) => const LoginScreen(isAdmin: true),
+        '/admin-register': (context) => const AdminRegisterScreen(isAdmin: true),
+        '/admin-setup': (context) => const AdminSetupScreen(),
         //'/providers': (context) => const ServiceProvidersList(),
         //'/select_date': (context) => const ReservationDateScreen(),
         //'/select_time': (context) => const ReservationTimeScreen(),
