@@ -109,7 +109,10 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                 ),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Sofadi One',
+                ),
               ),
               const SizedBox(height: 20),
               TextField(
