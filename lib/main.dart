@@ -11,6 +11,8 @@ import 'screens/reservation_date_screen.dart';
 import 'screens/reservation_time_screen.dart';
 import 'screens/reservation_confirmation_screen.dart';
 import 'screens/user_reservations_screen.dart';
+import 'screens/user_details_screen.dart';
+import 'screens/user_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,11 +48,14 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/admin-register': (context) => const AdminRegisterScreen(isAdmin: true),
         '/admin-setup': (context) => const AdminSetupScreen(),
+        '/user-details': (context) => const UserDetailsScreen(),
         //'/providers': (context) => const ServiceProvidersList(),
         //'/select_date': (context) => const ReservationDateScreen(),
         //'/select_time': (context) => const ReservationTimeScreen(),
         //'/confirm': (context) => const ReservationConfirmationScreen(),
         //'/my_reservations': (context) => const UserReservationsScreen(),
+        '/user-details': (context) => const UserDetailsScreen(),
+        '/user-dashboard': (context) => const UserDashboardScreen(),
       },
     );
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:termino/services/auth_service.dart'; // prilagodi prema tvojoj putanji
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +11,35 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
+
+  Future<void> loginUser({
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    try {
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      print('✅ Login successful: ${userCredential.user?.uid}');
+
+      if (userCredential.user != null) {
+        Navigator.pushReplacementNamed(context, '/user-dashboard');
+      } else {
+        print('⚠️ userCredential.user je null');
+      }
+    } on FirebaseAuthException catch (e) {
+      print('🔥 FirebaseAuthException: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Greška: ${e.message}')),
+      );
+    } catch (e) {
+      print('❌ Neočekivana greška: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Došlo je do greške.')),
+      );
+    }
+  }
 
   void _login() async {
     final email = _emailController.text.trim();
@@ -24,11 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    await _authService.loginUser(
-      email: email,
-      password: password,
-      context: context,
-    );
+    await loginUser(email: email, password: password, context: context);
   }
 
   @override
