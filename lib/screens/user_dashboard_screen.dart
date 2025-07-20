@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:termino/screens/reservation_date_screen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -110,7 +111,17 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       itemBuilder: (context, index) {
                         final data = filteredDocs[index].data() as Map<String, dynamic>;
                         final name = data['name'] ?? 'Nepoznato';
-                        return _ServiceCard(title: name);
+                        return _ServiceCard(
+                          title: name,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReservationDateScreen(serviceId: filteredDocs[index].id),
+                              ),
+                            );
+                          },
+                        );
                       },
                     );
                   },
@@ -144,31 +155,37 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
 class _ServiceCard extends StatelessWidget {
   final String title;
-  const _ServiceCard({required this.title});
+  final VoidCallback onTap;
+
+  const _ServiceCard({required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white24,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.store, size: 40, color: Color(0xFFC3F44D)),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: const TextStyle(color: Color(0xFFC3F44D), fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white24,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.store, size: 40, color: Color(0xFFC3F44D)),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: const TextStyle(color: Color(0xFFC3F44D), fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       ),
