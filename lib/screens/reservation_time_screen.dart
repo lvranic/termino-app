@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class ReservationTimeScreen extends StatefulWidget {
@@ -67,14 +68,35 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
     }
   }
 
-  void _confirmReservation() {
+  void _confirmReservation() async {
     if (selectedHour == null) return;
 
-    Navigator.pushNamed(context, '/confirm', arguments: {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final reservationData = {
+      'userId': user.uid,
       'serviceId': serviceId,
-      'selectedDate': selectedDate,
-      'selectedTime': '$selectedHour:00',
-    });
+      'date': Timestamp.fromDate(selectedDate),
+      'time': '$selectedHour:00',
+      'hour': selectedHour,
+      'createdAt': Timestamp.now(),
+    };
+
+    try {
+      await FirebaseFirestore.instance.collection('reservations').add(reservationData);
+
+      Navigator.pushNamed(context, '/confirm', arguments: {
+        'serviceId': serviceId,
+        'selectedDate': selectedDate,
+        'selectedTime': '$selectedHour:00',
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Greška prilikom spremanja rezervacije.')),
+      );
+      debugPrint('❌ Greška pri spremanju rezervacije: $e');
+    }
   }
 
   @override

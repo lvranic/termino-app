@@ -11,6 +11,7 @@ import 'screens/reservation_time_screen.dart';
 import 'screens/reservation_confirmation_screen.dart';
 import 'screens/user_details_screen.dart';
 import 'screens/user_dashboard_screen.dart';
+import 'screens/my_appointments_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/select-date': (context) => const ReservationDateScreen(serviceId: ''),
         '/select_time': (context) => const ReservationTimeScreen(),
         '/user-dashboard': (context) => const UserDashboardScreen(),
+        '/my-appointments': (context) => const MyAppointmentsScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/confirm') {
