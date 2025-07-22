@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,7 +25,18 @@ class _LoginScreenState extends State<LoginScreen> {
       print('✅ Login successful: ${userCredential.user?.uid}');
 
       if (userCredential.user != null) {
-        Navigator.pushReplacementNamed(context, '/user-dashboard');
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        final role = userDoc.data()?['role'] ?? 'user';
+
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/user-dashboard');
+        }
       } else {
         print('⚠️ userCredential.user je null');
       }
@@ -154,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  // možeš ovdje dodati navigaciju na zaboravljenu lozinku
+                  // Dodaj funkcionalnost za zaboravljenu lozinku ako treba
                 },
                 child: const Text(
                   'Zaboravio/la si lozinku?',

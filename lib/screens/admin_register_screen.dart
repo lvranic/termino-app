@@ -11,19 +11,21 @@ class AdminRegisterScreen extends StatefulWidget {
 }
 
 class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
-
   final _authService = AuthService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(); // 📞 Dodano
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
   void _registerAdmin() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim(); // 📞 Dodano
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Molimo popunite sva polja')),
       );
@@ -38,7 +40,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
     }
 
     try {
-      final user = await _authService.signUpWithEmail(email, password, name, 'admin');
+      final user = await _authService.signUpWithEmail(email, password, name, 'admin', phone); // 📞 Dodano
 
       if (user != null) {
         Navigator.pushReplacementNamed(context, '/admin-setup');
@@ -54,6 +56,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose(); // 📞 Dodano
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -109,10 +112,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                 ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Sofadi One',
-                ),
+                style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 20),
               TextField(
@@ -128,6 +128,21 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                 ),
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Broj mobitela',
+                  labelStyle: TextStyle(color: Colors.white),
+                  fillColor: Colors.white24,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 20),
               TextField(

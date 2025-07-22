@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+//import '../models/service_model.dart'; // ako koristiš poseban model za uslugu
 
 class ReservationDateScreen extends StatefulWidget {
   final String serviceId;
@@ -11,13 +13,69 @@ class ReservationDateScreen extends StatefulWidget {
 
 class _ReservationDateScreenState extends State<ReservationDateScreen> {
   DateTime? _selectedDate;
+  List<DateTime> _unavailableDates = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnavailableDates();
+  }
+
+  Future<void> _loadUnavailableDates() async {
+    try {
+      // Dohvati uslugu
+      final serviceSnapshot = await FirebaseFirestore.instance
+          .collection('services')
+          .doc(widget.serviceId)
+          .get();
+
+      final adminId = serviceSnapshot.data()?['adminId'];
+
+      if (adminId == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final unavailableSnapshot = await FirebaseFirestore.instance
+          .collection('unavailable_days')
+          .where('adminId', isEqualTo: adminId)
+          .get();
+
+      setState(() {
+        _unavailableDates = unavailableSnapshot.docs
+            .map((doc) => (doc.data()['date'] as Timestamp).toDate())
+            .toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Greška prilikom dohvaćanja neradnih dana: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  bool _isDateSelectable(DateTime day) {
+    // Nedjelja
+    if (day.weekday == DateTime.sunday) return false;
+
+    // Je li dan među zabranjenima
+    for (final unavailable in _unavailableDates) {
+      if (unavailable.year == day.year &&
+          unavailable.month == day.month &&
+          unavailable.day == day.day) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   void _goToTimeSelection() {
     if (_selectedDate == null) return;
 
     Navigator.pushNamed(
       context,
-      '/select_time', // ✅ Ispravna ruta prema main.dart
+      '/select_time',
       arguments: {
         'serviceId': widget.serviceId,
         'selectedDate': _selectedDate,
@@ -33,13 +91,15 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
         backgroundColor: const Color(0xFF1A434E),
         title: const Text('Odaberi datum', style: TextStyle(color: Color(0xFFC3F44D))),
       ),
-      body: Padding(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             const SizedBox(height: 20),
 
-            // 📅 KALENDAR unutar bijelog okvira i s temom koja koristi zelene brojeve
+            // 📅 KALENDAR
             Container(
               decoration: BoxDecoration(
                 color: Colors.white24,
@@ -53,9 +113,9 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
                     bodyMedium: const TextStyle(color: Colors.green),
                   ),
                   colorScheme: Theme.of(context).colorScheme.copyWith(
-                    primary: Colors.green, // boja odabranog datuma
-                    onPrimary: Colors.white, // tekst na odabranom datumu
-                    onSurface: Color(0xFFC3F44D), // boja dana
+                    primary: Colors.green,
+                    onPrimary: Colors.white,
+                    onSurface: const Color(0xFFC3F44D),
                   ),
                 ),
                 child: CalendarDatePicker(
@@ -63,17 +123,16 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
                   firstDate: DateTime.now(),
                   lastDate: DateTime.now().add(const Duration(days: 60)),
                   onDateChanged: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                    });
+                    setState(() => _selectedDate = date);
                   },
+                  selectableDayPredicate: _isDateSelectable,
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
 
-            // Gumb u bijelom okviru
+            // Gumb
             Container(
               decoration: BoxDecoration(
                 color: Colors.white24,

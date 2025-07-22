@@ -12,6 +12,8 @@ import 'screens/reservation_confirmation_screen.dart';
 import 'screens/user_details_screen.dart';
 import 'screens/user_dashboard_screen.dart';
 import 'screens/my_appointments_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
+import 'screens/admin_settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +54,8 @@ class MyApp extends StatelessWidget {
         '/select_time': (context) => const ReservationTimeScreen(),
         '/user-dashboard': (context) => const UserDashboardScreen(),
         '/my-appointments': (context) => const MyAppointmentsScreen(),
+        '/admin-dashboard': (context) => const AdminDashboardScreen(),
+        '/admin-settings': (context) => const AdminSettingsScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/confirm') {

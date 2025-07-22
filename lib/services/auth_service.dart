@@ -18,23 +18,30 @@ class AuthService {
     }
   }
 
-  Future<User?> signUpWithEmail(String email, String password, String name, String role) async {
+  Future<User?> signUpWithEmail(
+      String email,
+      String password,
+      String name,
+      String role,
+      String phone, // 📞 dodano
+      ) async {
     try {
-      final result = await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      await _firestore.collection('users').doc(result.user!.uid).set({
+      await _firestore.collection('users').doc(credential.user!.uid).set({
         'name': name,
         'email': email,
         'role': role,
-        'createdAt': Timestamp.now(),
+        'phone': phone, // 📞 snimi u bazu
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      return result.user;
-    } on FirebaseAuthException catch (e) {
-      throw e.message ?? 'Registration error';
+      return credential.user;
+    } catch (e) {
+      rethrow;
     }
   }
 

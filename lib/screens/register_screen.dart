@@ -39,6 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password,
         'Nepoznato',
         'user',
+        '', // 📞 Dodano kao prazan string
       );
 
       if (user != null) {
