@@ -19,6 +19,7 @@ class ReservationConfirmationScreen extends StatefulWidget {
 
 class _ReservationConfirmationScreenState extends State<ReservationConfirmationScreen> {
   String? serviceName;
+  int? durationMinutes;
   bool isLoading = true;
 
   @override
@@ -30,13 +31,16 @@ class _ReservationConfirmationScreenState extends State<ReservationConfirmationS
   Future<void> _fetchServiceName() async {
     try {
       final doc = await FirebaseFirestore.instance.collection('services').doc(widget.serviceId).get();
+      final data = doc.data();
       setState(() {
-        serviceName = doc.data()?['name'] ?? 'Nepoznata usluga';
+        serviceName = data?['name'] ?? 'Nepoznata usluga';
+        durationMinutes = data?['durationMinutes'];
         isLoading = false;
       });
     } catch (e) {
       setState(() {
         serviceName = 'Nepoznata usluga';
+        durationMinutes = null;
         isLoading = false;
       });
     }
@@ -77,6 +81,11 @@ class _ReservationConfirmationScreenState extends State<ReservationConfirmationS
                 'Vrijeme: ${widget.selectedTime}',
                 style: const TextStyle(color: Colors.white70),
               ),
+              if (durationMinutes != null)
+                Text(
+                  'Trajanje: $durationMinutes minuta',
+                  style: const TextStyle(color: Colors.white70),
+                ),
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {

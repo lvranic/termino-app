@@ -43,7 +43,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
       final user = await _authService.signUpWithEmail(email, password, name, 'admin', phone); // 📞 Dodano
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/admin-setup');
+        Navigator.pushReplacementNamed(context, '/add-services');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

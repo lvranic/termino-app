@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:termino/screens/reservation_date_screen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -12,24 +11,25 @@ class UserDashboardScreen extends StatefulWidget {
 class _UserDashboardScreenState extends State<UserDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  Future<List<QueryDocumentSnapshot>>? _servicesFuture;
+  Future<List<QueryDocumentSnapshot>>? _adminsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadServices();
+    _loadAdmins();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
-        _loadServices();
+        _loadAdmins();
       });
     });
   }
 
-  void _loadServices() {
-    _servicesFuture = FirebaseFirestore.instance
-        .collection('services')
+  void _loadAdmins() {
+    _adminsFuture = FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'admin')
         .get()
         .then((snapshot) => snapshot.docs);
   }
@@ -40,6 +40,17 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     super.dispose();
   }
 
+  void _openSelectServiceScreen(String adminId, String adminName) {
+    Navigator.pushNamed(
+      context,
+      '/select-service',
+      arguments: {
+        'providerId': adminId,
+        'providerName': adminName,
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,6 +59,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         backgroundColor: const Color(0xFF1A434E),
         title: const Text('Dobrodošli', style: TextStyle(color: Color(0xFFC3F44D))),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Color(0xFFC3F44D)),
+            onPressed: () {
+              Navigator.pushNamed(context, '/user-settings');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFC3F44D)),
             onPressed: () {
@@ -70,7 +87,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: 'Upiši ime ili uslugu...',
+                  hintText: 'Upiši ime pružatelja...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -82,7 +99,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               SizedBox(
                 height: 140,
                 child: FutureBuilder<List<QueryDocumentSnapshot>>(
-                  future: _servicesFuture,
+                  future: _adminsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator(color: Colors.white));
@@ -90,7 +107,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
-                          child: Text('Nema dostupnih usluga.', style: TextStyle(color: Colors.white70)));
+                          child: Text('Nema dostupnih pružatelja.', style: TextStyle(color: Colors.white70)));
                     }
 
                     final filteredDocs = _searchQuery.isEmpty
@@ -109,18 +126,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       scrollDirection: Axis.horizontal,
                       itemCount: filteredDocs.length,
                       itemBuilder: (context, index) {
-                        final data = filteredDocs[index].data() as Map<String, dynamic>;
-                        final name = data['name'] ?? 'Nepoznato';
+                        final admin = filteredDocs[index];
+                        final name = admin['name'] ?? 'Nepoznato';
+
                         return _ServiceCard(
                           title: name,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ReservationDateScreen(serviceId: filteredDocs[index].id),
-                              ),
-                            );
-                          },
+                          onTap: () => _openSelectServiceScreen(admin.id, name),
                         );
                       },
                     );

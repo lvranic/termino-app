@@ -15,9 +15,11 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
   late DateTime selectedDate;
   int startHour = 9;
   int endHour = 17;
+  int durationMinutes = 60;
   bool isLoading = true;
-  Set<int> bookedHours = {};
-  int? selectedHour; // ← DODANO
+  Set<int> blockedSlots = {};
+  int? selectedHour;
+  late String adminId;
 
   @override
   void didChangeDependencies() {
@@ -29,16 +31,19 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
   }
 
   Future<void> _loadData() async {
-    await _fetchWorkingHours();
-    await _fetchBookedTimes();
+    await _fetchServiceInfo();
+    await _fetchBookedSlots();
     setState(() => isLoading = false);
+    //late String adminId;
   }
 
-  Future<void> _fetchWorkingHours() async {
+  Future<void> _fetchServiceInfo() async {
     try {
       final doc = await FirebaseFirestore.instance.collection('services').doc(serviceId).get();
       final data = doc.data();
       final hours = data?['workingHours'] ?? '9-17h';
+      durationMinutes = data?['durationMinutes'] ?? 60;
+      adminId = data?['adminId'];
 
       final parts = hours.replaceAll('h', '').split('-');
       if (parts.length == 2) {
@@ -46,25 +51,43 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
         endHour = int.tryParse(parts[1].trim()) ?? 17;
       }
     } catch (e) {
-      debugPrint('Greška kod radnog vremena: $e');
+      debugPrint('❌ Greška kod učitavanja usluge: $e');
     }
   }
 
-  Future<void> _fetchBookedTimes() async {
+  Future<void> _fetchBookedSlots() async {
     try {
-      final formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
       final snapshot = await FirebaseFirestore.instance
           .collection('reservations')
-          .where('serviceId', isEqualTo: serviceId)
-          .where('date', isEqualTo: formattedDate)
+          .where('date', isEqualTo: Timestamp.fromDate(
+          DateTime(selectedDate.year, selectedDate.month, selectedDate.day)))
           .get();
 
+      final blocked = <int>{};
+
       for (var doc in snapshot.docs) {
-        final hour = int.tryParse(doc['hour'].toString());
-        if (hour != null) bookedHours.add(hour);
+        final resServiceId = doc['serviceId'];
+        final resDoc = await FirebaseFirestore.instance.collection('services').doc(resServiceId).get();
+        final resData = resDoc.data();
+        if (resData == null) continue;
+
+        final resAdminId = resData['adminId'];
+        if (resAdminId != adminId) continue; // 👈 gledaj samo rezervacije istog pružatelja usluge
+
+        final hour = doc['hour'] as int?;
+        final duration = doc['durationMinutes'] ?? 60;
+
+        if (hour != null) {
+          final blocks = (duration / 60).ceil(); // zaokruži npr. 90min na 2 sata
+          for (int i = 0; i < blocks; i++) {
+            blocked.add(hour + i);
+          }
+        }
       }
+
+      blockedSlots = blocked;
     } catch (e) {
-      debugPrint('Greška kod dohvaćanja rezervacija: $e');
+      debugPrint('❌ Greška kod dohvaćanja rezervacija: $e');
     }
   }
 
@@ -74,17 +97,19 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final reservationData = {
+    final data = {
       'userId': user.uid,
       'serviceId': serviceId,
-      'date': Timestamp.fromDate(selectedDate),
+      'date': Timestamp.fromDate(DateTime(selectedDate.year, selectedDate.month, selectedDate.day)),
       'time': '$selectedHour:00',
       'hour': selectedHour,
+      'durationMinutes': durationMinutes,
       'createdAt': Timestamp.now(),
     };
+    debugPrint('🔍 Spremanje rezervacije s trajanjem: $durationMinutes minuta');
 
     try {
-      await FirebaseFirestore.instance.collection('reservations').add(reservationData);
+      await FirebaseFirestore.instance.collection('reservations').add(data);
 
       Navigator.pushNamed(context, '/confirm', arguments: {
         'serviceId': serviceId,
@@ -97,6 +122,14 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
       );
       debugPrint('❌ Greška pri spremanju rezervacije: $e');
     }
+  }
+
+  bool _isSlotAvailable(int hour) {
+    final slotsNeeded = (durationMinutes / 60).ceil();
+    for (int i = 0; i < slotsNeeded; i++) {
+      if (blockedSlots.contains(hour + i)) return false;
+    }
+    return hour + slotsNeeded <= endHour;
   }
 
   @override
@@ -130,33 +163,30 @@ class _ReservationTimeScreenState extends State<ReservationTimeScreen> {
                 itemCount: endHour - startHour,
                 itemBuilder: (context, index) {
                   final hour = startHour + index;
-                  final time = '$hour:00';
-                  final isBooked = bookedHours.contains(hour);
+                  final available = _isSlotAvailable(hour);
                   final isSelected = selectedHour == hour;
 
                   return Card(
-                    color: isBooked
+                    color: !available
                         ? Colors.grey.shade700
                         : isSelected
                         ? const Color(0xFFC3F44D)
                         : Colors.white,
                     child: ListTile(
                       title: Text(
-                        'Termin u $time',
+                        'Termin u $hour:00',
                         style: TextStyle(
-                          color: isBooked
+                          color: !available
                               ? Colors.white54
                               : isSelected
                               ? const Color(0xFF1A434E)
                               : Colors.black,
                         ),
                       ),
-                      enabled: !isBooked,
-                      onTap: isBooked
-                          ? null
-                          : () {
-                        setState(() => selectedHour = hour);
-                      },
+                      enabled: available,
+                      onTap: available
+                          ? () => setState(() => selectedHour = hour)
+                          : null,
                     ),
                   );
                 },

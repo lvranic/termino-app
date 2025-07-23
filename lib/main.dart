@@ -14,6 +14,9 @@ import 'screens/user_dashboard_screen.dart';
 import 'screens/my_appointments_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'screens/admin_settings_screen.dart';
+import 'screens/user_settings_screen.dart';
+import 'screens/add_services_screen.dart';
+import 'screens/select_service_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +59,9 @@ class MyApp extends StatelessWidget {
         '/my-appointments': (context) => const MyAppointmentsScreen(),
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
         '/admin-settings': (context) => const AdminSettingsScreen(),
+        '/user-settings': (context) => const UserSettingsScreen(),
+        '/add-services': (context) => const AddServicesScreen(),
+        '/select-service': (context) => const SelectServiceScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/confirm') {

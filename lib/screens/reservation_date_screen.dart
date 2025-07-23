@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-//import '../models/service_model.dart'; // ako koristiš poseban model za uslugu
 
 class ReservationDateScreen extends StatefulWidget {
   final String serviceId;
+  final int durationMinutes;
 
-  const ReservationDateScreen({super.key, required this.serviceId});
+  const ReservationDateScreen({
+    super.key,
+    required this.serviceId,
+    this.durationMinutes = 60,
+  });
 
   @override
   State<ReservationDateScreen> createState() => _ReservationDateScreenState();
@@ -15,22 +19,28 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
   DateTime? _selectedDate;
   List<DateTime> _unavailableDates = [];
   bool isLoading = true;
+  late int _durationMinutes;
 
   @override
   void initState() {
     super.initState();
+    _durationMinutes = widget.durationMinutes;
     _loadUnavailableDates();
   }
 
   Future<void> _loadUnavailableDates() async {
     try {
-      // Dohvati uslugu
       final serviceSnapshot = await FirebaseFirestore.instance
           .collection('services')
           .doc(widget.serviceId)
           .get();
 
       final adminId = serviceSnapshot.data()?['adminId'];
+      final duration = serviceSnapshot.data()?['duration'];
+
+      if (duration != null && duration is int) {
+        _durationMinutes = duration;
+      }
 
       if (adminId == null) {
         setState(() => isLoading = false);
@@ -55,19 +65,9 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
   }
 
   bool _isDateSelectable(DateTime day) {
-    // Nedjelja
     if (day.weekday == DateTime.sunday) return false;
-
-    // Je li dan među zabranjenima
-    for (final unavailable in _unavailableDates) {
-      if (unavailable.year == day.year &&
-          unavailable.month == day.month &&
-          unavailable.day == day.day) {
-        return false;
-      }
-    }
-
-    return true;
+    return !_unavailableDates.any((d) =>
+    d.year == day.year && d.month == day.month && d.day == day.day);
   }
 
   void _goToTimeSelection() {
@@ -79,6 +79,7 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
       arguments: {
         'serviceId': widget.serviceId,
         'selectedDate': _selectedDate,
+        'duration': _durationMinutes,
       },
     );
   }
@@ -98,8 +99,6 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-
-            // 📅 KALENDAR
             Container(
               decoration: BoxDecoration(
                 color: Colors.white24,
@@ -129,10 +128,7 @@ class _ReservationDateScreenState extends State<ReservationDateScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 40),
-
-            // Gumb
             Container(
               decoration: BoxDecoration(
                 color: Colors.white24,

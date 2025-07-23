@@ -16,7 +16,83 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadReservations();
+    _listenToReservations(); // ← dodano ovdje
+  }
+
+  void _listenToReservations() async {
+    // ostatak metode ostaje isti...
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Dohvati sve usluge admina
+    final servicesSnapshot = await FirebaseFirestore.instance
+        .collection('services')
+        .where('adminId', isEqualTo: user.uid)
+        .get();
+
+    final serviceIds = servicesSnapshot.docs.map((doc) => doc.id).toList();
+    if (serviceIds.isEmpty) return;
+
+    // Slušaj sve nove rezervacije
+    FirebaseFirestore.instance
+        .collection('reservations')
+        .where('serviceId', whereIn: serviceIds)
+        .snapshots()
+        .listen((snapshot) async {
+      List<Map<String, dynamic>> temp = [];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+
+        // Preskoči ako status nije aktivan
+        if (data['status'] == 'cancelled') continue;
+
+        final rawDate = data['date'];
+        DateTime? date;
+        if (rawDate is Timestamp) {
+          date = rawDate.toDate();
+        } else if (rawDate is String) {
+          date = DateTime.tryParse(rawDate);
+        }
+
+        if (date == null) continue;
+
+        final String time = data['time'] ?? '';
+        final String userId = data['userId'] ?? '';
+        final String docId = doc.id;
+
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        final userName = userDoc.data()?['name'] ?? 'Nepoznati korisnik';
+
+        temp.add({
+          'docId': docId,
+          'date': date,
+          'time': time,
+          'userName': userName,
+        });
+      }
+
+      // Ako broj rezervacija raste, znaci nova je dodana
+      if (temp.length > reservations.length) {
+        final nova = temp.firstWhere(
+              (r) => !reservations.any((e) => e['docId'] == r['docId']),
+          orElse: () => {},
+        );
+        if (nova.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('📅 Nova rezervacija: ${nova['userName']} na ${nova['date'].day}.${nova['date'].month} u ${nova['time']}'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+
+      setState(() {
+        reservations = temp;
+        isLoading = false;
+      });
+    });
   }
 
   Future<void> _loadReservations() async {
